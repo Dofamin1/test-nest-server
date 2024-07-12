@@ -5,3 +5,10 @@ export interface UserData {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface XLSXUser {
+  ID: number,
+  Name: string,
+  Email: string,
+  'Created At': string
+}

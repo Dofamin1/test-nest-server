@@ -3,10 +3,10 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DeleteResult } from 'typeorm';
 import { UserEntity } from './user.entity';
 import { CreateUserDto, UpdateUserDto } from './dto';
-import { validate } from 'class-validator';
 import { HttpException } from '@nestjs/common/exceptions/http.exception';
 import { HttpStatus } from '@nestjs/common';
-import { UserData } from "./user.interface";
+import { UserData, XLSXUser } from "./user.interface";
+import * as XLSX from 'xlsx';
 
 @Injectable()
 export class UserService {
@@ -14,6 +14,23 @@ export class UserService {
         @InjectRepository(UserEntity)
         private readonly userRepository: Repository<UserEntity>
     ) {}
+
+    async uploadUsers(file: Express.Multer.File): Promise<void> {
+        const workbook = XLSX.read(file.buffer, { type: 'buffer' });
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        const users: XLSXUser[] = XLSX.utils.sheet_to_json(worksheet);
+
+        await this.userRepository.manager.transaction(async (tr) => {
+            await Promise.all(users.map((user) => {
+                tr.insert('user',
+                    {
+                        email: user.Email,
+                        username: user.Name,
+                    }
+                );
+            }))
+        })
+    }
 
     async findAll(): Promise<UserEntity[]> {
         return await this.userRepository.find();
@@ -32,18 +49,12 @@ export class UserService {
             throw new HttpException({ message: 'Input data validation failed', errors }, HttpStatus.BAD_REQUEST);
         }
 
-        let newUser = new UserEntity();
-        newUser.username = username;
-        newUser.email = email;
+        const userEntity = await this.userRepository.create({
+            username,
+            email
+        })
 
-        const errors = await validate(newUser);
-        if (errors.length > 0) {
-            const _errors = { username: 'User input is not valid.' };
-            throw new HttpException({ message: 'Input data validation failed', _errors }, HttpStatus.BAD_REQUEST);
-        } else {
-            const userEntity = await this.userRepository.save(newUser);
-            return this.buildUserDTO(userEntity);
-        }
+        return this.buildUserDTO(userEntity);
     }
 
     async update(dto: UpdateUserDto): Promise<UserEntity> {

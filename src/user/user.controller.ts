@@ -1,7 +1,9 @@
-import { Post, Body, Put, Get, Delete, Param, Controller } from '@nestjs/common';
+import { Post, Body, Put, Get, Delete, Param, Controller, UseInterceptors, UploadedFile } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { CreateUserDto, UpdateUserDto } from './dto';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { multerConfig } from './multer.config';
 
 @ApiTags('user')
 @Controller()
@@ -37,5 +39,12 @@ export class UserController {
     @ApiOperation({ summary: 'Delete all users' })
     async deleteAll(@Param() params) {
         return await this.userService.deleteAll();
+    }
+
+    @Post('user/upload')
+    @ApiOperation({ summary: 'Upload users from xlsx' })
+    @UseInterceptors(FileInterceptor('file', multerConfig))
+    async uploadFile(@UploadedFile() file: Express.Multer.File) {
+        await this.userService.uploadUsers(file);
     }
 }
