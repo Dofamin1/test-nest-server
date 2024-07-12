@@ -32,8 +32,9 @@ export class UserService {
         })
     }
 
-    async findAll(): Promise<UserEntity[]> {
-        return await this.userRepository.find();
+    async findAll(): Promise<UserData[]> {
+        const users = await this.userRepository.find();
+        return users.map((u) => this.buildUserDTO(u));
     }
 
     async create(dto: CreateUserDto): Promise<UserData> {
@@ -49,15 +50,15 @@ export class UserService {
             throw new HttpException({ message: 'Input data validation failed', errors }, HttpStatus.BAD_REQUEST);
         }
 
-        const userEntity = await this.userRepository.create({
-            username,
-            email
-        })
+        let userEntity = new UserEntity();
+        userEntity.email = email;
+        userEntity.username = username;
+        const newUser = await this.userRepository.save(userEntity);
 
-        return this.buildUserDTO(userEntity);
+        return this.buildUserDTO(newUser);
     }
 
-    async update(dto: UpdateUserDto): Promise<UserEntity> {
+    async update(dto: UpdateUserDto): Promise<UserData> {
         const { userId, ...dataToUpdate } = dto;
         const toUpdate = await this.userRepository.findOne({ where: { id: userId } });
 
@@ -66,7 +67,9 @@ export class UserService {
         }
 
         const updated = Object.assign(toUpdate, dataToUpdate);
-        return await this.userRepository.save(updated);
+        const result = await this.userRepository.save(updated);
+
+        return this.buildUserDTO(result);
     }
 
     async delete(id: number): Promise<DeleteResult> {

@@ -26,6 +26,8 @@ export class UserEntity {
 
   @BeforeUpdate()
   updateTimestamp() {
-    this.updatedAt = new Date();
+    const date = new Date();
+    const utcDate = date.toUTCString();
+    this.updatedAt = new Date(utcDate);
   }
 }

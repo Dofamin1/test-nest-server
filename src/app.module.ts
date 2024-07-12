@@ -3,7 +3,6 @@ import { AppController } from './app.controller';
 import { UserModule } from './user/user.module';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserEntity } from './user/user.entity';
-import { Connection } from 'typeorm';
 import config from '../config';
 
 @Module({
@@ -26,5 +25,5 @@ import config from '../config';
   providers: []
 })
 export class AppModule {
-  constructor(private readonly connection: Connection) {}
+  constructor() {}
 }

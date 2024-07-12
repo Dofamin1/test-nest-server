@@ -13,6 +13,5 @@ import { UserService } from './user.service';
   exports: [UserService]
 })
 export class UserModule implements NestModule {
-  public configure(consumer: MiddlewareConsumer) {
-  }
+  public configure(consumer: MiddlewareConsumer) {}
 }
