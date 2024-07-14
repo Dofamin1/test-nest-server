@@ -85,8 +85,8 @@ export class UserService {
             id: user.id,
             username: user.username,
             email: user.email,
-            createdAt: user.createdAt.toString(),
-            updatedAt: user.updatedAt.toString()
+            createdAt: user.createdAt.toISOString(),
+            updatedAt: user.updatedAt.toISOString()
         };
     }
 }
