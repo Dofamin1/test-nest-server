@@ -45,6 +45,6 @@ export class UserController {
     @ApiOperation({ summary: 'Upload users from xlsx' })
     @UseInterceptors(FileInterceptor('file', multerConfig))
     async uploadFile(@UploadedFile() file: Express.Multer.File) {
-        await this.userService.uploadUsers(file);
+        return await this.userService.uploadUsers(file);
     }
 }
