@@ -15,21 +15,28 @@ export class UserService {
         private readonly userRepository: Repository<UserEntity>
     ) {}
 
-    async uploadUsers(file: Express.Multer.File): Promise<void> {
+    async uploadUsers(file: Express.Multer.File): Promise<UserData[]> {
         const workbook = XLSX.read(file.buffer, { type: 'buffer' });
         const worksheet = workbook.Sheets[workbook.SheetNames[0]];
         const users: XLSXUser[] = XLSX.utils.sheet_to_json(worksheet);
+        const parsedUsers = users.map((user) => ({
+            email: user.Email,
+            username: user.Name
+        }));
 
+        const newUsers: UserData[] = []
         await this.userRepository.manager.transaction(async (tr) => {
-            await Promise.all(users.map((user) => {
-                tr.insert('user',
-                    {
-                        email: user.Email,
-                        username: user.Name,
-                    }
+            await Promise.all(parsedUsers.map(async (user) => {
+                const insertRes = await tr.insert('user',
+                    {...user}
                 );
+
+                //@ts-ignore
+                newUsers.push({ ...user, ...insertRes.generatedMaps[0] })
             }))
-        })
+        });
+
+        return newUsers;
     }
 
     async findAll(): Promise<UserData[]> {
@@ -85,8 +92,8 @@ export class UserService {
             id: user.id,
             username: user.username,
             email: user.email,
-            createdAt: user.createdAt.toString(),
-            updatedAt: user.updatedAt.toString()
+            createdAt: user.createdAt.toISOString(),
+            updatedAt: user.updatedAt.toISOString()
         };
     }
 }
